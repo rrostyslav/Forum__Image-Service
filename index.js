@@ -2,6 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const dbPool = require('./middleware/dbConnectionPool');
+
+if(process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 
 const IndexRoutes = require('./routes/index');
 
@@ -10,6 +15,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(morgan('dev'));
+app.use(dbPool);
 
 app.use('/', IndexRoutes);
 

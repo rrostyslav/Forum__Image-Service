@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
+const IndexControllers = require('../controllers/index');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -12,7 +13,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
         cb(null, true);
     } else {
         const error = new Error('Unsupported mimetype');
@@ -29,9 +30,6 @@ const upload = multer({
     fileFilter
 });
 
-router.post('/', upload.single('image'), (req, res, next) => {
-    console.log(req.file);
-    res.send('Test');
-});
+router.post('/', upload.single('image'), IndexControllers.uploadImage);
 
 module.exports = router;
