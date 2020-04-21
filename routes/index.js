@@ -30,6 +30,8 @@ const upload = multer({
     fileFilter
 });
 
+router.get('/:id', IndexControllers.getImage);
+
 router.post('/', upload.single('image'), IndexControllers.uploadImage);
 
 module.exports = router;
