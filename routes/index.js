@@ -1,37 +1,42 @@
 const router = require('express').Router();
-const multer = require('multer');
-const path = require('path');
-const IndexControllers = require('../controllers/index');
+const { upload } = require('../config/multer')
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '/../uploads/'));
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${file.fieldname}-${Date.now()}.${file.mimetype.split('/')[1]}`)
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-        cb(null, true);
-    } else {
-        const error = new Error('Unsupported mimetype');
+router.get('/:id', async (req, res, next) => {
+    const id = +req.params.id;
+    if (isNaN(id)) {
+        const error = new Error('Invalid image ID');
         error.status = 400;
-        cb(error, false)
+        return next(error);
     }
-}
-
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 1024 * 1024 * 3
-    },
-    fileFilter
+    if(id === -1) return res.status(200).json({
+        id: -1,
+        uri: 'None'
+    })
+    try {
+        const image = await req.con.execute("SELECT * FROM image WHERE id=?", [id]);
+        if (image[0].length === 0) {
+            const error = new Error('No such image');
+            error.status = 400;
+            return next(error);
+        }
+        res.status(200).json(image[0][0]);
+    } catch (err) {
+        console.log(err);
+        next(new Error('Falied to get image'));
+    }
 });
 
-router.get('/:id', IndexControllers.getImage);
-
-router.post('/', upload.single('image'), IndexControllers.uploadImage);
+router.post('/', upload.single('image'), async (req, res, next) => {
+    if (!req.file) return res.status(400).json({ message: 'No image' });
+    try {
+        await req.con.execute("INSERT INTO image VALUES(null, ?)", [req.file.filename]);
+        res.status(200).json({
+            filename: req.file.filename
+        });
+    } catch (err) {
+        console.log(err);
+        next(new Error('Falied to add image'))
+    }
+});
 
 module.exports = router;
